@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GERADOR DE ATESTADOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+* { box-sizing: border-box; margin:0; padding:0; font-family: 'Inter', sans-serif; }
+body { background-color: #111; color:#fff; display:flex; flex-direction:column; align-items:center; min-height:100vh; }
+
+@keyframes flashLogin {
+  0%, 100% { box-shadow: 0 0 15px #00fff7; }
+  50% { box-shadow: 0 0 25px #00fff7; }
+}
+
+.container { display:none; flex-direction: column; align-items: center; width: 90%; max-width: 450px; background-color: #1e1e1e; border-radius: 15px; padding: 30px; box-shadow: 0 0 25px rgba(0,255,255,0.2); transition: all 0.5s ease; }
+.container h1 { font-size: 28px; margin-bottom: 25px; color:#00fff7; text-align:center; }
+.container input, .container select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #555; background:#222; color:#fff; font-size:16px; }
+.container button { background:#00fff7; color:#111; border:none; padding:14px; border-radius:10px; font-size:17px; cursor:pointer; width:80%; margin-top:10px; transition: all 0.3s ease; }
+.container button:hover { background:#0ff; transform: scale(1.05); }
+
+#errorMsg { display:none; color:#ff5555; margin-top:10px; font-weight:bold; text-align:center; }
+
+#menu { display:none; flex-direction: column; align-items:center; width:95%; max-width:650px; margin-top:20px; background:#1c1c1c; padding:25px; border-radius:15px; box-shadow:0 0 25px rgba(0,255,255,0.2); }
+#welcome { font-size:26px; font-weight:bold; color:#00fff7; margin-bottom:15px; animation: pulseBounce 1.5s infinite; }
+@keyframes pulseBounce { 0% {transform:scale(1); opacity:1;} 25% {transform:scale(1.05); opacity:0.85;} 50% {transform:scale(1); opacity:1;} 75% {transform:scale(1.05); opacity:0.9;} 100% {transform:scale(1); opacity:1;} }
+
+#gerarPixBtn { background:#00fff7; color:#111; font-weight:bold; width:80%; margin-bottom:15px; }
+
+.form-container { width:100%; background:#222; padding:25px; border-radius:15px; margin-bottom:20px; box-shadow:0 5px 15px rgba(0,255,255,0.1);}
+.form-container label { font-size:15px; font-weight:600; margin-top:12px; display:block; color:#0ff; }
+.form-container input, .form-container select { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:1px solid #555; background:#111; color:#fff; font-size:15px; outline:none; }
+.form-container select { cursor:pointer; }
+
+.ready-message { display:none; background-color:#00fff7; padding:15px; border-radius:12px; width:100%; text-align:center; font-size:17px; margin-bottom:15px; color:#111; font-weight:bold; }
+
+.button-container { display:none; flex-wrap:wrap; gap:15px; justify-content:center; width:100%; margin-bottom:25px; }
+.action-btn { background:#0ff; color:#111; border:none; padding:12px 24px; border-radius:10px; font-size:16px; cursor:pointer; transition: transform 0.3s ease; }
+.action-btn:hover { transform: scale(1.05); }
+
+.a4-page { width:210mm; min-height:297mm; background:#fff; color:#000; padding:25mm; box-sizing:border-box; filter:contrast(1.1) brightness(1.05); position:absolute; left:-9999px; }
+.header { text-align:center; }
+.logo { height:120px; }
+#logoAtestado.unimed { height:90px; }
+.title { border:1px solid #000; text-align:center; font-weight:bold; font-size:20px; margin:20px auto; width:250px; padding:6px; }
+.content { font-size:15px; line-height:1.5; text-align:justify; }
+.cid { margin-top:20px; }
+.date { text-align:right; margin-top:35px; font-size:15px; }
+.signature { margin-top:50px; text-align:center; }
+.signature img { width:360px; height:auto; }
+.assinado { margin-top:25px; line-height:1.3; text-align:left; font-size:12px; }
+.assinado strong { font-weight:bold; }
+.footer { font-size:13px; text-align:center; margin-top:20px; }
+.footer .clinic-name { font-weight:bold; margin-bottom:5px; display:block; font-size:16px; }
+.footer .endereco { font-weight:normal; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="container" id="login" style="display:flex;">
+  <h1>PAINEL GERADOR DE ATESTADOS</h1>
+  <input type="text" id="user" placeholder="Usuário">
+  <input type="password" id="pass" placeholder="Senha">
+  <button onclick="login()">Entrar</button>
+  <p id="errorMsg">Usuário ou senha incorretos!</p>
+</div>
+
+<div id="menu">
+  <div id="welcome">✅ SEJA BEM-VINDO 🏅</div>
+  <button class="action-btn" id="gerarPixBtn">Gerar PIX</button>
+
+  <div class="form-container">
+    <label>Nome do Paciente:</label>
+    <input type="text" id="nome" value="Michael Pereira Duarte">
+    <label>RG/CPF:</label>
+    <input type="text" id="cpf" value="1096553084">
+    <label>Dias de afastamento:</label>
+    <input type="number" id="dias" value="3">
+    <label>CID:</label>
+    <input type="text" id="cid" value="F41">
+    <label>Cidade/UF:</label>
+    <input type="text" id="cidade" value="Parnamirim - RN">
+    <label>Data:</label>
+    <input type="text" id="data" value="18/08/2025">
+    <label>Hora:</label>
+    <input type="text" id="hora" value="16:20">
+    <label>Médico:</label>
+    <select id="medicoSelect" onchange="atualizarMedico()">
+      <option value="afonso" data-nome="Dr. Afonso C. A. Cardoso" data-crm="CRM 165810 - Clínico Geral" data-assinatura="https://i.imgur.com/gYL4XDn.jpeg">Dr. Afonso C. A. Cardoso</option>
+      <option value="bruno" data-nome="Dr. Bruno Dian Granda" data-crm="CRM 15950 - Clínico Geral" data-assinatura="https://i.imgur.com/Qd6uJTz.jpeg">Dr. Bruno Dian Granda</option>
+      <option value="rodolfo" data-nome="Dr. Rodolfo P. De Albuquerque" data-crm="CRM 40137 - Clínico Geral" data-assinatura="https://i.imgur.com/RhuZU9a.jpeg">Dr. Rodolfo P. De Albuquerque</option>
+    </select>
+    <label>Endereço da Clínica:</label>
+    <input type="text" id="endereco" value="R. Ten. Ferreira Maldos, 92 - Centro, Parnamirim - RN, 59140-220">
+    <label>Modelo:</label>
+    <select id="modelo">
+      <option value="amor">Amor e Saúde</option>
+      <option value="unimed">Unimed</option>
+      <option value="upa">UPA 24 HORAS</option>
+    </select>
+    <button class="action-btn" onclick="gerarAtestado()">Gerar Atestado</button>
+  </div>
+
+  <div class="ready-message" id="readyMessage">
+    ✅ Atestado gerado! Primeiro baixe o atestado, depois clique em gerar PDF.
+  </div>
+
+  <div class="button-container" id="buttonContainer">
+    <button class="action-btn" id="downloadImgBtn">Baixar Atestado</button>
+    <button class="action-btn" id="gerarPdfBtn">Gerar PDF</button>
+  </div>
+</div>
+
+<div class="a4-page" id="atestado">
+  <div class="header">
+    <img src="" alt="Logo" class="logo" id="logoAtestado">
+  </div>
+  <div class="title">ATESTADO MÉDICO</div>
+  <div class="content">
+    <p>
+      Atesto, para os devidos fins que o SR(a) <b><span id="outNome">Michael Pereira Duarte</span></b>
+      portador(a) do RG/CPF <b><span id="outCpf">1096553084</span></b>,
+      recebeu atendimento médico nesta unidade. Devendo permanecer afastado(a) de suas atividades laborais no período de
+      (<b><span id="outDias">3</span></b>) dias, a partir desta data.
+    </p>
+    <p class="cid">
+      Portando a patologia codificada ao CID: <b><span id="outCid">F41</span></b>
+    </p>
+  </div>
+  <div class="date">
+    <span id="outCidade">Parnamirim - RN</span>,
+    <span id="outData">18/08/2025</span>.
+  </div>
+  <div class="signature">
+    <img src="https://i.imgur.com/gYL4XDn.jpeg" alt="Assinatura">
+  </div>
+  <div class="assinado">
+    <strong>Assinado por:</strong><br>
+    <strong id="medicoBold">DR. AFONSO C. A. CARDOSO</strong><br>
+    <strong id="crmBold">CRM 165810 - CLÍNICO GERAL</strong><br>
+    <strong>DATA:</strong> <span id="outAssData"><strong>18/08/2025</strong></span><br>
+    <strong>HORÁRIO:</strong> <span id="outAssHora"><strong>16:20</strong></span>
+  </div>
+  <div class="footer">
+    <span class="clinic-name" id="footerNome"></span>
+    <div class="endereco"><span id="outEndereco">R. Ten. Ferreira Maldos, 92 - Centro, Parnamirim - RN, 59140-220</span></div>
+  </div>
+</div>
+
+<script>
+function atualizarMedico() {
+  const select = document.getElementById("medicoSelect");
+  const selected = select.options[select.selectedIndex];
+
+  const nome = selected.dataset.nome;
+  const crm = selected.dataset.crm;
+  const assinatura = selected.dataset.assinatura;
+
+  document.getElementById("medicoBold").textContent = nome.toUpperCase();
+  document.getElementById("crmBold").textContent = crm.toUpperCase();
+  document.querySelector(".signature img").src = assinatura;
+}
+
+function atualizarAtestado() {
+  document.getElementById("outNome").textContent = document.getElementById("nome").value;
+  document.getElementById("outCpf").textContent = document.getElementById("cpf").value;
+  document.getElementById("outDias").textContent = document.getElementById("dias").value;
+  document.getElementById("outCid").textContent = document.getElementById("cid").value;
+  document.getElementById("outCidade").textContent = document.getElementById("cidade").value;
+  document.getElementById("outEndereco").textContent = document.getElementById("endereco").value;
+
+  const dataInput = document.getElementById("data").value;
+  document.getElementById("outData").textContent = dataInput;
+  document.getElementById("outAssData").innerHTML = "<strong>" + dataInput + "</strong>";
+  document.getElementById("outAssHora").innerHTML = "<strong>" + document.getElementById("hora").value + "</strong>";
+
+  const modelo = document.getElementById("modelo").value;
+  const logo = document.getElementById("logoAtestado");
+  const footerNome = document.getElementById("footerNome");
+
+  if(modelo === "amor") {
+    logo.src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnGzK3EAlrf-asWLO7F2wXbAlYKHZJJ9pvzg&s";
+    logo.classList.remove("unimed");
+    footerNome.textContent = "CLÍNICA AMOR E SAÚDE";
+  } else if(modelo === "unimed") {
+    logo.src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtgmn-KZ0DZor_tpbiuQVHkZcKEwnS6uJNqjWfeFU8laIOA7TtlSQnO2kV&s";
+    logo.classList.add("unimed");
+    footerNome.textContent = "UNIMED";
+  } else if(modelo === "upa") {
+    logo.src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT1nfEPgJEkyVEulCKVnbHuap918wgv8sxmd6_mAD9BKzp67qnyb5fkQPwI&s";
+    logo.classList.remove("unimed");
+    footerNome.textContent = "UPA 24 HORAS";
+  }
+
+  atualizarMedico();
+}
+
+function gerarAtestado() {
+  atualizarAtestado();
+  document.getElementById("readyMessage").style.display = "block";
+  document.getElementById("buttonContainer").style.display = "flex";
+}
+
+document.querySelectorAll(".form-container input, .form-container select").forEach(el => el.addEventListener("input", atualizarAtestado));
+
+function login() {
+  const user = document.getElementById("user").value;
+  const pass = document.getElementById("pass").value;
+
+  if(user === "atestados" && pass === "atestados") {
+    document.getElementById("errorMsg").style.display = "none";
+    document.getElementById("login").style.animation = "flashLogin 1s ease-in-out 3";
+    setTimeout(() => {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("menu").style.display = "flex";
+    }, 1200);
+  } else {
+    document.getElementById("errorMsg").style.display = "block";
+  }
+}
+
+document.getElementById('downloadImgBtn').addEventListener('click', () => {
+  const element = document.getElementById('atestado');
+  html2canvas(element, { scale: 3, useCORS: true }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'atestado_medico.png';
+    link.href = canvas.toDataURL('image/png', 1.0);
+    link.click();
+  });
+});
+
+document.getElementById('gerarPdfBtn').addEventListener('click', () => {
+  window.open('https://www.ilovepdf.com/pt', '_blank');
+});
+
+document.getElementById('gerarPixBtn').addEventListener('click', () => {
+  window.open('https://livepix.gg/user1524', '_blank');
+});
+</script>
+</body>
+</html>
